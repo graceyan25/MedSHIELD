@@ -4,7 +4,7 @@ Config dataclass + interactive setup + JSON save/load.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from typing import List, Optional
 
 import pandas as pd
@@ -39,36 +39,9 @@ Return ONLY a JSON object in this exact format:
   "Sentence_Relevance": ["High Relevance", "Low Relevance", ...]
 }}"""
 
-
-def _make_multi_prompt_template(question_names: List[str]) -> str:
-    n = len(question_names)
-    keys_str = "\n".join(f'  "{name}": "<letter>",' for name in question_names)
-    return (
-        f"You are given a list of sentences and {n} multiple-choice question(s).\n\n"
-        "Your task is twofold:\n"
-        "(1) Select the single best answer for EACH question.\n"
-        "(2) Label each sentence as [High Relevance], [Low Relevance], or [Irrelevant]\n"
-        "    based on its contribution to answering the questions.\n\n"
-        "Questions and Options:\n{options}\n\n"
-        "Sentences:\n{sentences}\n\n"
-        "Return ONLY a JSON object in this exact format:\n"
-        "{\n"
-        + keys_str + "\n"
-        '  "Sentence_Relevance": ["High Relevance", "Low Relevance", ...]\n'
-        "}"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
-
-@dataclass
-class QuestionDef:
-    """One question in multi-question mode."""
-    name: str        # output column name, e.g. "household_income"
-    correct_col: str  # input column with the ground-truth answer (empty = unknown)
-
 
 @dataclass
 class ToolkitConfig:
@@ -82,10 +55,8 @@ class ToolkitConfig:
     options_col: str = ""                 # question + answer options text
     groupby_col: Optional[str] = None     # optional: group rows for per-group stats
 
-    # Task mode
-    mode: str = "single"                  # "single" or "multi"
-    correct_answer_col: Optional[str] = None   # single-mode ground truth
-    questions: List[QuestionDef] = field(default_factory=list)  # multi-mode
+    # Correct answer
+    correct_answer_col: Optional[str] = None
 
     # Model
     provider: str = "openai"
@@ -110,17 +81,13 @@ class ToolkitConfig:
     def load(cls, path: str) -> "ToolkitConfig":
         with open(path) as f:
             data = json.load(f)
-        questions = [QuestionDef(**q) for q in data.pop("questions", [])]
-        return cls(**data, questions=questions)
+        return cls(**data)
 
     def get_prompt_template(self) -> str:
         if self.custom_prompt_path:
             with open(self.custom_prompt_path) as f:
                 return f.read()
-        if self.mode == "single":
-            return SINGLE_PROMPT_TEMPLATE
-        return _make_multi_prompt_template([q.name for q in self.questions])
-
+        return SINGLE_PROMPT_TEMPLATE
 
 # ---------------------------------------------------------------------------
 # Interactive setup
