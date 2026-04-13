@@ -453,7 +453,7 @@ def _run_analysis_display(cfg, results_path: str):
 def main():
     _init_state()
 
-    st.title("Sentence Relevance Evaluation Toolkit")
+    st.title("MedSHIELD Toolkit")
     st.caption("Upload a CSV, configure your experiment, query a GPT model, and analyze results.")
 
     tab1, tab2, tab3 = st.tabs(["1 · Configure", "2 · Query", "3 · Analyze"])
