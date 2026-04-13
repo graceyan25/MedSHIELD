@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Data & results (don't publish potentially sensitive CSVs)
+*.csv
+Results/
+
+# Configs with local paths
+my_experiment.json
+
+# OS
+.DS_Store
